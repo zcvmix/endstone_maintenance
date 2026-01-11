@@ -2,6 +2,7 @@
 
 #include <endstone/color_format.h>
 #include <endstone/form/modal_form.h>
+#include <endstone/form/controls/label.h>
 #include <endstone/form/controls/text_input.h>
 #include <endstone/scheduler/scheduler.h>
 
@@ -14,7 +15,17 @@ ENDSTONE_PLUGIN("maintenance", "1.0.0", MaintenancePlugin)
 
 void MaintenancePlugin::onEnable()
 {
-    saveDefaultConfig();
+    // Initialize Config
+    config_ = std::make_unique<SimpleConfig>("plugins/maintenance", "config.yml");
+    
+    // Default Config Content
+    std::string default_config = 
+        "maintenance.enabled: true\n"
+        "maintenance.password: passwordhere\n"
+        "maintenance.kick_delay: 15\n";
+    
+    config_->saveDefault(default_config);
+
     registerEvent(&MaintenancePlugin::onPlayerJoin, *this);
     getLogger().info("Maintenance Plugin enabled.");
 }
@@ -26,8 +37,10 @@ void MaintenancePlugin::onDisable()
 
 void MaintenancePlugin::onPlayerJoin(endstone::PlayerJoinEvent &event)
 {
-    auto &config = getConfig();
-    bool enabled = config.getBoolean("maintenance.enabled", false);
+    // Reload config on join to allow live edits
+    config_->reload();
+
+    bool enabled = getConfig().getBoolean("maintenance.enabled", true);
     if (!enabled) {
         return;
     }
@@ -44,15 +57,16 @@ void MaintenancePlugin::onPlayerJoin(endstone::PlayerJoinEvent &event)
 
 void MaintenancePlugin::sendLoginWindow(endstone::Player &player)
 {
-    auto &config = getConfig();
-    int delay = config.getInt("maintenance.kick_delay", 15);
-    std::string password = config.getString("maintenance.password", "passwordhere");
+    int delay = getConfig().getInt("maintenance.kick_delay", 15);
+    std::string password = getConfig().getString("maintenance.password", "passwordhere");
 
     endstone::UUID uuid = player.getUniqueId();
+    
+    // Schedule kick task
     auto task = getServer().getScheduler().runTaskLater(*this, [this, uuid]() {
-        auto *player = getServer().getPlayer(uuid);
-        if (player) {
-            player->kick("You took too long to login during maintenance.");
+        auto *p = getServer().getPlayer(uuid);
+        if (p) {
+            p->kick("You took too long to login during maintenance.");
         }
         pending_kicks_.erase(uuid);
     }, delay * 20);
@@ -62,31 +76,39 @@ void MaintenancePlugin::sendLoginWindow(endstone::Player &player)
     auto form = std::make_unique<endstone::ModalForm>();
     form->setTitle("Server Maintenance");
     
-    form->addControl(std::make_shared<endstone::Label>("The server is currently in maintenance mode."));
-    form->addControl(std::make_shared<endstone::TextInput>("password_input", "Enter Password", "Password"));
+    // NOTE: In C++ API, pass objects, not shared_ptrs, to addControl
+    form->addControl(endstone::Label("The server is currently in maintenance mode."));
+    form->addControl(endstone::TextInput("password_input", "Enter Password", "Password"));
 
     form->setSubmitButton("Login");
 
-    form->setOnSubmit([this, uuid, password](endstone::Player &p, std::string json_response) {
+    // NOTE: Callbacks give 'endstone::Player *' (pointer), not reference
+    form->setOnSubmit([this, uuid, password](endstone::Player *p, std::string json_response) {
+        if (!p) return;
+
         if (pending_kicks_.find(uuid) != pending_kicks_.end()) {
-            pending_kicks_[uuid]->cancel();
+            if (pending_kicks_[uuid]) pending_kicks_[uuid]->cancel();
             pending_kicks_.erase(uuid);
         }
+
+        // Basic check: does the JSON response contain the password?
         if (json_response.find(password) != std::string::npos) {
-            p.sendMessage(endstone::ColorFormat::Green + "Password accepted. Welcome!");
-            p.sendTitle("Welcome", "Maintenance Mode");
+            p->sendMessage(endstone::ColorFormat::Green + "Password accepted. Welcome!");
+            p->sendTitle("Welcome", "Maintenance Mode");
         } else {
-            p.kick("Wrong Password!");
+            p->kick("Wrong Password!");
         }
     });
 
-    form->setOnClose([this, uuid](endstone::Player &p) {
+    form->setOnClose([this, uuid](endstone::Player *p) {
+        if (!p) return;
+
         if (pending_kicks_.find(uuid) != pending_kicks_.end()) {
-            pending_kicks_[uuid]->cancel();
+            if (pending_kicks_[uuid]) pending_kicks_[uuid]->cancel();
             pending_kicks_.erase(uuid);
         }
-        p.kick("Come Check Back Soon!");
+        p->kick("Come Check Back Soon!");
     });
 
-    player.sendForm(std::move(form));
+    player.sendForm(*form);
 }
