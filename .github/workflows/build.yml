@@ -1,4 +1,4 @@
-name: Build
+name: Build Plugin
 
 on:
   push:
@@ -39,7 +39,7 @@ jobs:
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: example-plugin-windows
+          name: endstone-maintenance-windows
           path: |
             ./build/endstone_*.dll
             ./build/endstone_*.pdb
@@ -78,7 +78,7 @@ jobs:
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: example-plugin-linux
+          name: endstone-maintenance-linux
           path: ./build/endstone_*.so
 
   release:
@@ -91,13 +91,13 @@ jobs:
       - name: Download Windows Artifacts
         uses: actions/download-artifact@v4
         with:
-          name: example-plugin-windows
+          name: endstone_maintenance-windows
           path: artifacts/windows
 
       - name: Download Linux Artifacts
         uses: actions/download-artifact@v4
         with:
-          name: example-plugin-linux
+          name: endstone-maintenance-linux
           path: artifacts/linux
 
       - name: Create GitHub Release
