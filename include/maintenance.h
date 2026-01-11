@@ -1,8 +1,6 @@
 #pragma once
 
-#include <endstone/plugin/plugin.hpp>
-#include <endstone/event/player/player_join_event.h>
-#include <endstone/scheduler/task.h>
+#include <endstone/endstone.hpp> 
 #include <unordered_map>
 #include <string>
 
