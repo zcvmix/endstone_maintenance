@@ -5,8 +5,8 @@
 #include <endstone/form/controls/label.h>
 #include <endstone/form/controls/text_input.h>
 #include <endstone/scheduler/scheduler.h>
-#include <endstone/potion/potion_effect.h>
-#include <endstone/potion/potion_effect_type.h>
+#include <endstone/effect/effect_type.h>
+#include <endstone/potion/potion_type.h>
 
 ENDSTONE_PLUGIN("maintenance", "1.0.0", MaintenancePlugin)
 {
