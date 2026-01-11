@@ -17,7 +17,6 @@ ENDSTONE_PLUGIN("maintenance", "1.0.0", MaintenancePlugin)
 
 void MaintenancePlugin::onEnable()
 {
-    // Initialize Config
     config_ = std::make_unique<SimpleConfig>("plugins/maintenance", "config.yml");
     
     std::string default_config = 
