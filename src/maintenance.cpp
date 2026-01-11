@@ -5,6 +5,8 @@
 #include <endstone/form/controls/label.h>
 #include <endstone/form/controls/text_input.h>
 #include <endstone/scheduler/scheduler.h>
+#include <endstone/potion/potion_effect.h>
+#include <endstone/potion/potion_effect_type.h>
 
 ENDSTONE_PLUGIN("maintenance", "1.0.0", MaintenancePlugin)
 {
@@ -18,7 +20,6 @@ void MaintenancePlugin::onEnable()
     // Initialize Config
     config_ = std::make_unique<SimpleConfig>("plugins/maintenance", "config.yml");
     
-    // Default Config Content
     std::string default_config = 
         "maintenance.enabled: true\n"
         "maintenance.password: passwordhere\n"
@@ -37,7 +38,6 @@ void MaintenancePlugin::onDisable()
 
 void MaintenancePlugin::onPlayerJoin(endstone::PlayerJoinEvent &event)
 {
-    // Reload config on join to allow live edits
     config_->reload();
 
     bool enabled = getConfig().getBoolean("maintenance.enabled", true);
@@ -52,6 +52,8 @@ void MaintenancePlugin::onPlayerJoin(endstone::PlayerJoinEvent &event)
         return;
     }
 
+    player.addPotionEffect(endstone::PotionEffect(endstone::PotionEffectType::Blindness, 1000000, 255));
+
     sendLoginWindow(player);
 }
 
@@ -62,7 +64,6 @@ void MaintenancePlugin::sendLoginWindow(endstone::Player &player)
 
     endstone::UUID uuid = player.getUniqueId();
     
-    // Schedule kick task
     auto task = getServer().getScheduler().runTaskLater(*this, [this, uuid]() {
         auto *p = getServer().getPlayer(uuid);
         if (p) {
@@ -76,13 +77,13 @@ void MaintenancePlugin::sendLoginWindow(endstone::Player &player)
     auto form = std::make_unique<endstone::ModalForm>();
     form->setTitle("Server Maintenance");
     
-    // NOTE: In C++ API, pass objects, not shared_ptrs, to addControl
+    std::string time_label = "§6Time Left: §a" + std::to_string(delay) + "§r";
+    form->addControl(endstone::Label(time_label));
     form->addControl(endstone::Label("The server is currently in maintenance mode."));
-    form->addControl(endstone::TextInput("password_input", "Enter Password", "Password"));
+    form->addControl(endstone::TextInput("Password To Enter The Server", "Enter Password", ". . ."));
 
     form->setSubmitButton("Login");
 
-    // NOTE: Callbacks give 'endstone::Player *' (pointer), not reference
     form->setOnSubmit([this, uuid, password](endstone::Player *p, std::string json_response) {
         if (!p) return;
 
@@ -91,8 +92,8 @@ void MaintenancePlugin::sendLoginWindow(endstone::Player &player)
             pending_kicks_.erase(uuid);
         }
 
-        // Basic check: does the JSON response contain the password?
-        if (json_response.find(password) != std::string::npos) {
+        if (json_response.find(password) != std::string::npos)
+            p->removePotionEffect(endstone::PotionEffectType::Blindness);
             p->sendMessage(endstone::ColorFormat::Green + "Password accepted. Welcome!");
             p->sendTitle("Welcome", "Maintenance Mode");
         } else {
