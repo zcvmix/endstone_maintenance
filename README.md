@@ -10,7 +10,7 @@ When enabled, this plugin restricts server access by requiring players to enter 
 - **Bypass:** Operators and players with the `maintenance.bypass` permission can skip the login process.
 
 ## Version
-Current Version: **1.0.0**
+Current Version: **2.0**
 
 ## License
 This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
