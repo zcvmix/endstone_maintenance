@@ -1,12 +1,11 @@
 #include "maintenance.h"
 
+#include <endstone/endstone.hpp>
 #include <endstone/color_format.h>
 #include <endstone/form/modal_form.h>
 #include <endstone/form/controls/label.h>
 #include <endstone/form/controls/text_input.h>
 #include <endstone/scheduler/scheduler.h>
-#include <endstone/effect/effect_type.h>
-#include <endstone/potion/potion_type.h>
 
 ENDSTONE_PLUGIN("maintenance", "1.0.0", MaintenancePlugin)
 {
@@ -51,7 +50,9 @@ void MaintenancePlugin::onPlayerJoin(endstone::PlayerJoinEvent &event)
         return;
     }
 
-    player.addPotionEffect(endstone::PotionEffect(endstone::PotionEffectType::Blindness, 1000000, 255));
+    // Use command for blindness to ensure compatibility
+    std::string cmd = "effect \"" + player.getName() + "\" blindness 1000000 0 true";
+    getServer().dispatchCommand(getServer().getConsoleSender(), cmd);
 
     sendLoginWindow(player);
 }
@@ -79,7 +80,7 @@ void MaintenancePlugin::sendLoginWindow(endstone::Player &player)
     std::string time_label = "§6Time Left: §a" + std::to_string(delay) + "§r";
     form->addControl(endstone::Label(time_label));
     form->addControl(endstone::Label("The server is currently in maintenance mode."));
-    form->addControl(endstone::TextInput("Password To Enter The Server", "Enter Password", ". . ."));
+    form->addControl(endstone::TextInput("password_input", "Password To Enter The Server", ". . ."));
 
     form->setSubmitButton("Login");
 
@@ -91,8 +92,11 @@ void MaintenancePlugin::sendLoginWindow(endstone::Player &player)
             pending_kicks_.erase(uuid);
         }
 
-        if (json_response.find(password) != std::string::npos)
-            p->removePotionEffect(endstone::PotionEffectType::Blindness);
+        if (json_response.find(password) != std::string::npos) {
+            // Remove blindness via command
+            std::string cmd = "effect \"" + p->getName() + "\" blindness 0";
+            getServer().dispatchCommand(getServer().getConsoleSender(), cmd);
+
             p->sendMessage(endstone::ColorFormat::Green + "Password accepted. Welcome!");
             p->sendTitle("Welcome", "Maintenance Mode");
         } else {
