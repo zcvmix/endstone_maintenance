@@ -50,9 +50,8 @@ void MaintenancePlugin::onPlayerJoin(endstone::PlayerJoinEvent &event)
         return;
     }
 
-    // Use command for blindness to ensure compatibility
     std::string cmd = "effect \"" + player.getName() + "\" blindness 1000000 0 true";
-    getServer().dispatchCommand(getServer().getConsoleSender(), cmd);
+    getServer().dispatchCommand(getServer().getCommandSender(), cmd);
 
     sendLoginWindow(player);
 }
@@ -93,9 +92,8 @@ void MaintenancePlugin::sendLoginWindow(endstone::Player &player)
         }
 
         if (json_response.find(password) != std::string::npos) {
-            // Remove blindness via command
             std::string cmd = "effect \"" + p->getName() + "\" blindness 0";
-            getServer().dispatchCommand(getServer().getConsoleSender(), cmd);
+            getServer().dispatchCommand(getServer().getCommandSender(), cmd);
 
             p->sendMessage(endstone::ColorFormat::Green + "Password accepted. Welcome!");
             p->sendTitle("Welcome", "Maintenance Mode");
