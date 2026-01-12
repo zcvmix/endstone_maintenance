@@ -7,7 +7,7 @@
 #include <endstone/form/controls/text_input.h>
 #include <endstone/scheduler/scheduler.h>
 
-ENDSTONE_PLUGIN("maintenance", "1.0.0", MaintenancePlugin)
+ENDSTONE_PLUGIN("maintenance", "2.1", MaintenancePlugin)
 {
     description = "Maintenance Plugin.";
     authors = {"zcvmix or sphereto"};
@@ -50,10 +50,15 @@ void MaintenancePlugin::onPlayerJoin(endstone::PlayerJoinEvent &event)
         return;
     }
 
-    std::string cmd = "effect \"" + player.getName() + "\" blindness 1000000 0 true";
-    getServer().dispatchCommand(getServer().getCommandSender(), cmd);
+    std::string cmd_blind = "effect \"" + player.getName() + "\" blindness 1000000 255 true";
+    std::string cmd_slow = "effect \"" + player.getName() + "\" slowness 1000000 255 true";
+    std::string cmd_sfx = "effect \"" + player.getName() + "\" playsound random.orb @s";
+    
+    getServer().dispatchCommand(getServer().getCommandSender(), cmd_blind);
+    getServer().dispatchCommand(getServer().getCommandSender(), cmd_slow);
 
     sendLoginWindow(player);
+    getServer().dispatchCommand(getServer().getCommandSender(), cmd_sfx);
 }
 
 void MaintenancePlugin::sendLoginWindow(endstone::Player &player)
@@ -92,8 +97,14 @@ void MaintenancePlugin::sendLoginWindow(endstone::Player &player)
         }
 
         if (json_response.find(password) != std::string::npos) {
-            std::string cmd = "effect \"" + p->getName() + "\" blindness 0";
-            getServer().dispatchCommand(getServer().getCommandSender(), cmd);
+            std::string cmd_clear_blind = "effect \"" + p->getName() + "\" blindness 0";
+            std::string cmd_clear_slow = "effect \"" + p->getName() + "\" slowness 0";
+            std::string cmd_clear_sfx = "effect \"" + p->getName() + "\" playsound random.levelup @s";
+            
+            getServer().dispatchCommand(getServer().getCommandSender(), cmd_clear_blind);
+            getServer().dispatchCommand(getServer().getCommandSender(), cmd_clear_slow);
+            getServer().dispatchCommand(getServer().getCommandSender(), cmd_clear_sfx);
+
 
             p->sendMessage(endstone::ColorFormat::Green + "Password accepted. Welcome!");
             p->sendTitle("Welcome", "Maintenance Mode");
