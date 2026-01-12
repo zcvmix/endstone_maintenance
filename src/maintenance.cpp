@@ -52,10 +52,12 @@ void MaintenancePlugin::onPlayerJoin(endstone::PlayerJoinEvent &event)
 
     std::string cmd_blind = "effect \"" + player.getName() + "\" blindness 1000000 255 true";
     std::string cmd_slow = "effect \"" + player.getName() + "\" slowness 1000000 255 true";
+    std::string cmd_resist = "effect \"" + player.getName() + "\" resistance 1000000 255 true";
     std::string cmd_sfx = "effect \"" + player.getName() + "\" playsound random.orb @s";
     
     getServer().dispatchCommand(getServer().getCommandSender(), cmd_blind);
     getServer().dispatchCommand(getServer().getCommandSender(), cmd_slow);
+    getServer().dispatchCommand(getServer().getCommandSender(), cmd_resist);
 
     sendLoginWindow(player);
     getServer().dispatchCommand(getServer().getCommandSender(), cmd_sfx);
@@ -99,10 +101,12 @@ void MaintenancePlugin::sendLoginWindow(endstone::Player &player)
         if (json_response.find(password) != std::string::npos) {
             std::string cmd_clear_blind = "effect \"" + p->getName() + "\" blindness 0";
             std::string cmd_clear_slow = "effect \"" + p->getName() + "\" slowness 0";
+            std::string cmd_clear_resist = "effect \"" + p->getName() + "\" resistance 0";
             std::string cmd_clear_sfx = "effect \"" + p->getName() + "\" playsound random.levelup @s";
             
             getServer().dispatchCommand(getServer().getCommandSender(), cmd_clear_blind);
             getServer().dispatchCommand(getServer().getCommandSender(), cmd_clear_slow);
+            getServer().dispatchCommand(getServer().getCommandSender(), cmd_clear_resist);
             getServer().dispatchCommand(getServer().getCommandSender(), cmd_clear_sfx);
 
 
